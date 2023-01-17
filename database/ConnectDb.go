@@ -12,8 +12,9 @@ import (
 
 var DbName = "mongo-restaurant-fiber"
 var DbUrl = "mongodb://localhost:27017/" + DbName
+var Client *mongo.Client
 
-func DbInstance() *mongo.Client {
+func ConnectDB() {
 	client, err := mongo.NewClient(options.Client().ApplyURI(DbUrl))
 	if err != nil {
 		log.Fatal(err)
@@ -29,10 +30,8 @@ func DbInstance() *mongo.Client {
 
 	fmt.Println("DB Connected..")
 
-	return client
+	Client = client
 }
-
-var Client = DbInstance()
 
 func OpenCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	return client.Database(DbName).Collection(collectionName)
