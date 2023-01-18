@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/RahulMj21/mongo-restaurant-fiber/database"
 	"github.com/RahulMj21/mongo-restaurant-fiber/models"
 	"github.com/go-playground/validator/v10"
@@ -40,9 +42,69 @@ func GetFood(c *fiber.Ctx) error {
 }
 
 func CreateFood(c *fiber.Ctx) error {
-	// food := models.Food{}
-	// menu := models.Menu{}
+	food := models.Food{}
+	menu := models.Menu{}
 
-	return c.SendStatus(200)
+	if err := c.BodyParser(&food); err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
 
+	validationErr := validate.Struct(food)
+	if validationErr != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": validationErr.Error(),
+		})
+	}
+
+	menuObjectId, err := primitive.ObjectIDFromHex(food.MenuId)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	err = MenuCollection.FindOne(c.Context(), bson.D{{Key: "_id", Value: menuObjectId}}).Decode(&menu)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	food.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	food.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	price := ToFixed(food.Price, 2)
+	food.Price = price
+
+	insertedItem, err := FoodCollection.InsertOne(c.Context(), food)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	newFoodItem := models.Food{}
+	err = FoodCollection.FindOne(c.Context(), bson.D{{Key: "_id", Value: insertedItem.InsertedID}}).Decode(&newFoodItem)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(&fiber.Map{
+		"status": "success",
+		"data":   newFoodItem,
+	})
+
+}
+
+func ToFixed(num float64, precision int) float64 {
+	return num
 }
