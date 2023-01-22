@@ -6,6 +6,8 @@ import (
 )
 
 func FoodRoutes(app *fiber.App) {
+	app.Get("/foods", controllers.GetFoods)
 	app.Get("/food/:id", controllers.GetFood)
 	app.Post("/foods", controllers.CreateFood)
+	app.Put("/foods/:id", controllers.UpdateFood)
 }
