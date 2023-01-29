@@ -99,7 +99,49 @@ func GetInvoice(c *fiber.Ctx) error {
 }
 
 func CreateInvoice(c *fiber.Ctx) error {
-	return c.SendStatus(200)
+	invoice := models.Invoice{}
+	order := models.Order{}
+
+	if err := c.BodyParser(&order); err != nil {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	invoiceId, err := primitive.ObjectIDFromHex(invoice.OrderId)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	if err := OrderCollection.FindOne(c.Context(), bson.D{{Key: "_id", Value: invoiceId}}).Decode(&order); err != nil {
+		return c.Status(404).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	invoice.ID = primitive.NewObjectID()
+	invoice.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	invoice.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	invoice.PaymentDueDate, _ = time.Parse(time.RFC3339, time.Now().AddDate(0, 0, 1).Format(time.RFC3339))
+
+	status := "PENDING"
+	if invoice.PaymentStatus == nil {
+		invoice.PaymentStatus = &status
+	}
+
+	validationErr := Validate.Struct(invoice)
+	if validationErr != nil {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	insertedItem, err := InvoiceCollection.InsertOne(c.Context(), invoice)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	newInvoice := models.Invoice{}
+
+	if err := InvoiceCollection.FindOne(c.Context(), bson.D{{Key: "_id", Value: insertedItem.InsertedID}}).Decode(&newInvoice); err != nil {
+		return c.Status(500).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	return c.Status(201).JSON(&fiber.Map{"status": "success", "data": newInvoice})
 }
 
 func UpdateInvoice(c *fiber.Ctx) error {

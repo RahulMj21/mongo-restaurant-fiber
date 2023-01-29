@@ -7,7 +7,6 @@ import (
 
 	"github.com/RahulMj21/mongo-restaurant-fiber/database"
 	"github.com/RahulMj21/mongo-restaurant-fiber/models"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,7 +15,6 @@ import (
 )
 
 var FoodCollection = database.OpenCollection(database.Client, "food")
-var validate = validator.New()
 
 func GetFoods(c *fiber.Ctx) error {
 	resultPerPage, err := strconv.Atoi(c.Query("resultPerPage"))
@@ -111,7 +109,7 @@ func CreateFood(c *fiber.Ctx) error {
 		})
 	}
 
-	validationErr := validate.Struct(food)
+	validationErr := Validate.Struct(food)
 	if validationErr != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"status":  "fail",
