@@ -9,5 +9,5 @@ func MenuRoutes(app *fiber.App) {
 	app.Get("/menus", controllers.GetMenus)
 	app.Get("/menus/:id", controllers.GetMenu)
 	app.Post("/menus", controllers.CreateMenu)
-	app.Put("/menus/:id", controllers.UpdateMenu)
+	app.Patch("/menus/:id", controllers.UpdateMenu)
 }
