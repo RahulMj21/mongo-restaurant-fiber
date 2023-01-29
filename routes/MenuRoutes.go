@@ -5,9 +5,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func MenuRoutes(app *fiber.App) {
-	app.Get("/menus", controllers.GetMenus)
-	app.Get("/menus/:id", controllers.GetMenu)
-	app.Post("/menus", controllers.CreateMenu)
-	app.Patch("/menus/:id", controllers.UpdateMenu)
+func MenuRoutes(api fiber.Router) {
+	api.Get("/menus", controllers.GetMenus)
+	api.Get("/menus/:id", controllers.GetMenu)
+	api.Post("/menus", controllers.CreateMenu)
+	api.Patch("/menus/:id", controllers.UpdateMenu)
 }

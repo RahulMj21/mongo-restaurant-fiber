@@ -5,10 +5,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func InvoiceRoutes(app *fiber.App) {
-	app.Get("/invoices", controllers.GetInvoices)
-	app.Get("/invoices/:id", controllers.GetInvoice)
-	app.Post("/invoices", controllers.CreateInvoice)
-	app.Patch("/invoices/:id", controllers.UpdateInvoice)
+func InvoiceRoutes(api fiber.Router) {
+	api.Get("/invoices", controllers.GetInvoices)
+	api.Get("/invoices/:id", controllers.GetInvoice)
+	api.Post("/invoices", controllers.CreateInvoice)
+	api.Patch("/invoices/:id", controllers.UpdateInvoice)
 
 }

@@ -5,9 +5,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func FoodRoutes(app *fiber.App) {
-	app.Get("/foods", controllers.GetFoods)
-	app.Get("/food/:id", controllers.GetFood)
-	app.Post("/foods", controllers.CreateFood)
-	app.Patch("/foods/:id", controllers.UpdateFood)
+func FoodRoutes(api fiber.Router) {
+	api.Get("/foods", controllers.GetFoods)
+	api.Get("/food/:id", controllers.GetFood)
+	api.Post("/foods", controllers.CreateFood)
+	api.Patch("/foods/:id", controllers.UpdateFood)
 }
