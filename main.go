@@ -17,6 +17,7 @@ func main() {
 	routes.FoodRoutes(api)
 	routes.MenuRoutes(api)
 	routes.OrderRoutes(api)
+	routes.OrderItemRoutes(api)
 
 	err := app.Listen(":8000")
 	if err != nil {
