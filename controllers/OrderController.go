@@ -139,16 +139,13 @@ func UpdateOrder(c *fiber.Ctx) error {
 	return c.Status(200).JSON(&fiber.Map{"status": "success", "data": result})
 }
 
-func OrderItemOrderCreater(order models.Order) (interface{}, error) {
+func OrderItemOrderCreater(order models.Order) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
 	order.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	order.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	insertedItem, err := OrderCollection.InsertOne(ctx, order)
-
-	if err != nil {
-		return insertedItem.InsertedID, err
-	}
-	return insertedItem.InsertedID, nil
+	order.ID = primitive.NewObjectID()
+	_, err := OrderCollection.InsertOne(ctx, order)
+	return order.ID.Hex(), err
 }

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/RahulMj21/mongo-restaurant-fiber/database"
 	"github.com/RahulMj21/mongo-restaurant-fiber/models"
 	"github.com/gofiber/fiber/v2"
@@ -65,9 +67,63 @@ func ItemsByOrderId(id string) (OrderItems []primitive.M, err error) {
 }
 
 func CreateOrderItem(c *fiber.Ctx) error {
-	return c.SendStatus(200)
+	orderItemPack := OrderItemPack{}
+	order := models.Order{}
+
+	err := c.BodyParser(&orderItemPack)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	order.OrderDate, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	order.TableId = &orderItemPack.TableId
+	orderId, err := OrderItemOrderCreater(order)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	var orderItemsToBeInserted []interface{}
+
+	for _, orderItem := range orderItemPack.OrderItems {
+		orderItem.OrderId = orderId
+		validationErr := Validate.Struct(orderItem)
+		if validationErr != nil {
+			return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": validationErr.Error()})
+		}
+
+		orderItem.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		orderItem.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		unitPrice := toFixed(*orderItem.UnitPrice, 2)
+		orderItem.UnitPrice = &unitPrice
+
+		orderItemsToBeInserted = append(orderItemsToBeInserted, orderItem)
+	}
+
+	insertedItems, err := OrderItemsCollection.InsertMany(c.Context(), orderItemsToBeInserted)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{"status": "fail", "message": "failed to insert order items"})
+	}
+
+	return c.Status(201).JSON(&fiber.Map{"status": "success", "data": insertedItems})
 }
 
 func UpdateOrderItem(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	orderItem := models.OrderItem{}
+	if idParam == "" {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": "id cannot be empty"})
+	}
+	orderId, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	if err := c.BodyParser(&orderItem); err != nil {
+		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	if orderItem.UnitPrice != nil {
+
+	}
+
 	return c.SendStatus(200)
 }
