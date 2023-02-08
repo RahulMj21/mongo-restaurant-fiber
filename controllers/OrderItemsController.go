@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var OrderItemsCollection = database.OpenCollection(database.Client, "order_items")
@@ -112,7 +113,7 @@ func UpdateOrderItem(c *fiber.Ctx) error {
 	if idParam == "" {
 		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": "id cannot be empty"})
 	}
-	orderId, err := primitive.ObjectIDFromHex(idParam)
+	orderItemId, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
 	}
@@ -121,9 +122,32 @@ func UpdateOrderItem(c *fiber.Ctx) error {
 		return c.Status(400).JSON(&fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	if orderItem.UnitPrice != nil {
+	orderItemObj := primitive.D{}
 
+	if orderItem.UnitPrice != nil {
+		price := toFixed(*orderItem.UnitPrice, 2)
+		orderItemObj = append(orderItemObj, bson.E{Key: "unit_price", Value: &price})
+	}
+	if orderItem.Quantity != nil {
+		orderItemObj = append(orderItemObj, bson.E{Key: "quantity", Value: orderItem.Quantity})
+	}
+	if orderItem.FoodId != nil {
+		orderItemObj = append(orderItemObj, bson.E{Key: "food_id", Value: orderItem.FoodId})
 	}
 
-	return c.SendStatus(200)
+	orderItem.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	orderItemObj = append(orderItemObj, bson.E{Key: "updated_at", Value: orderItem.UpdatedAt})
+
+	filter := bson.D{{Key: "_id", Value: orderItemId}}
+	upsert := true
+	opt := options.UpdateOptions{
+		Upsert: &upsert,
+	}
+
+	result, err := OrderItemsCollection.UpdateOne(c.Context(), filter, bson.D{{Key: "$set", Value: orderItemObj}}, &opt)
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{"status": "fail", "message": "cannot update order_item"})
+	}
+
+	return c.Status(200).JSON(&fiber.Map{"status": "success", "data": result})
 }
