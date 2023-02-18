@@ -70,7 +70,7 @@ func GetInvoice(c *fiber.Ctx) error {
 
 	invoiceView := InvoiceViewFormat{}
 
-	allOrderItems, err := ItemsByOrderId(idParam)
+	allOrderItems, err := ItemsByOrderId(idParam, c.Context())
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"status":  "fail",

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/RahulMj21/mongo-restaurant-fiber/middlewares"
 	"github.com/RahulMj21/mongo-restaurant-fiber/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -11,6 +12,7 @@ import (
 func main() {
 	app := fiber.New()
 	app.Use(logger.New())
+	app.Use(middlewares.Authorization)
 	api := app.Group("/api/v1")
 
 	routes.TestRoutes(api)
