@@ -12,10 +12,13 @@ import (
 func main() {
 	app := fiber.New()
 	app.Use(logger.New())
-	app.Use(middlewares.Authorization)
 	api := app.Group("/api/v1")
 
 	routes.TestRoutes(api)
+	routes.UserRoutes(api)
+
+	app.Use(middlewares.Authorization)
+
 	routes.FoodRoutes(api)
 	routes.MenuRoutes(api)
 	routes.OrderRoutes(api)
